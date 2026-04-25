@@ -2,6 +2,7 @@
 
 A KDE Plasma 6 media player widget with a live audio-reactive waveform visualiser.
 
+![MediaWave](Screenshot_20260426_213656.png)
 ![MediaWave](Screenshot_20260424_213656.png)
 
 ![MediaWave](https://img.shields.io/badge/KDE-Plasma%206-blue) ![License](https://img.shields.io/badge/license-GPL--2.0-green)
