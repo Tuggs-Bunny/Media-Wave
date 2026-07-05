@@ -2,9 +2,6 @@
 
 A KDE Plasma 6 media player widget with a live audio-reactive waveform visualiser.
 
-![MediaWave](Screenshot_20260426_051827.png)
-![MediaWave](Screenshot_20260424_213656.png)
-
 ![MediaWave](https://img.shields.io/badge/KDE-Plasma%206-blue) ![License](https://img.shields.io/badge/license-GPL--2.0-green)
 
 ---
@@ -18,6 +15,21 @@ A KDE Plasma 6 media player widget with a live audio-reactive waveform visualise
 - Auto-skips to the next song at track end
 - Only captures audio from music apps (Elisa, Spotify, VLC, etc.) — never your mic, Discord, or games
 - Starts automatically on login via systemd
+- Configurable via the widget settings (right-click → Configure MediaWave)
+
+---
+
+## Settings
+
+Right-click the widget → **Configure MediaWave** → Appearance:
+
+| Setting | What it does |
+|---------|--------------|
+| Waveform style | Smooth wave or a row of 16 bars |
+| Waveform position | Visualiser below (default) or above the info card |
+| Waveform offset | Shift the visualiser left/right by up to 16 bars; the edge value extends to fill the gap |
+| Reactivity sensitivity | 0.2×–3.0× gain on the FFT bands before drawing |
+| Colours | Independent colours for the waveform, seek bar and play/pause button |
 
 ---
 
@@ -34,6 +46,8 @@ A KDE Plasma 6 media player widget with a live audio-reactive waveform visualise
 
 ## Installation
 
+Download and extract `MediaWave.zip` to your Downloads folder, then run the following commands one section at a time.
+
 **1. Install Python dependencies**
 ```bash
 sudo dnf install python3-dbus
@@ -43,13 +57,25 @@ pip install numpy --user
 **2. Install the companion daemon**
 ```bash
 mkdir -p ~/.local/share/mediawave
-cp mediawave-fft.py ~/.local/share/mediawave/
+cp ~/Downloads/mediawave-fft.py ~/.local/share/mediawave/
 ```
 
 **3. Install the systemd service**
 ```bash
 mkdir -p ~/.config/systemd/user
-cp mediawave-fft.service ~/.config/systemd/user/
+cat > ~/.config/systemd/user/mediawave-fft.service << 'EOF'
+[Unit]
+Description=MediaWave FFT Daemon
+After=default.target
+
+[Service]
+ExecStart=/usr/bin/python3 %h/.local/share/mediawave/mediawave-fft.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+EOF
 systemctl --user daemon-reload
 systemctl --user enable --now mediawave-fft
 ```
@@ -57,10 +83,12 @@ systemctl --user enable --now mediawave-fft
 **4. Install the Plasma widget**
 ```bash
 rm -rf ~/.local/share/plasma/plasmoids/com.github.mediawave
+mkdir -p /tmp/mediawave-install
+unzip -o ~/Downloads/mediawave.plasmoid -d /tmp/mediawave-install
 mkdir -p ~/.local/share/plasma/plasmoids/com.github.mediawave/contents/ui
-cd /tmp && unzip -o mediawave.plasmoid
-cp /tmp/mediawave/contents/ui/main.qml ~/.local/share/plasma/plasmoids/com.github.mediawave/contents/ui/
-cp /tmp/mediawave/metadata.json ~/.local/share/plasma/plasmoids/com.github.mediawave/
+cp /tmp/mediawave-install/mediawave/contents/ui/main.qml ~/.local/share/plasma/plasmoids/com.github.mediawave/contents/ui/
+cp -r /tmp/mediawave-install/mediawave/contents/config ~/.local/share/plasma/plasmoids/com.github.mediawave/contents/
+cp /tmp/mediawave-install/metadata.json ~/.local/share/plasma/plasmoids/com.github.mediawave/
 ```
 
 **5. Restart Plasma**
@@ -86,8 +114,9 @@ Right-click your desktop → Add Widgets → search for **MediaWave** → drag i
 
 ## Updating
 
-Re-run steps 2 and 4 with the new files, then:
+Copy the new files to your Downloads folder, then:
 ```bash
+cp ~/Downloads/mediawave-fft.py ~/.local/share/mediawave/mediawave-fft.py
 systemctl --user restart mediawave-fft
 kquitapp6 plasmashell && kstart plasmashell
 ```
